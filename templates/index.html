@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask - Random Forest</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .output {
+            margin-top: 20px;
+        }
+        .output table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .output table, .output th, .output td {
+            border: 1px solid black;
+        }
+        .output th, .output td {
+            padding: 10px;
+            text-align: left;
+        }
+        .output img {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Flask - Random Forest</h1>
+    
+    <!-- Botones para cada acción -->
+    <button class="button" onclick="performAction('load_data')">Cargar y Visualizar Datos</button>
+    <button class="button" onclick="performAction('length_features')">Ver Longitud y Características</button>
+    <button class="button" onclick="performAction('split_scale')">Dividir y Escalar Datos</button>
+    <button class="button" onclick="performAction('train_tree')">Entrenar Árbol de Decisión</button>
+    <button class="button" onclick="performAction('train')">Entrenar Modelo Completo</button>
+    
+    <!-- Sección para mostrar resultados -->
+    <div class="output" id="output"></div>
+
+    <script>
+        function performAction(action) {
+            let url = `/action/${action}`;
+            let method = 'GET';
+            
+            // Si la acción es 'train', se necesita un POST
+            if (action === 'train') {
+                url = '/train'; // Cambiar la URL para la acción POST
+                method = 'POST';
+            }
+
+            fetch(url, { method: method })
+                .then(response => response.json())
+                .then(data => {
+                    let outputDiv = document.getElementById("output");
+                    outputDiv.innerHTML = "";  // Limpiar resultados previos
+
+                    // Mostrar los resultados según la acción
+                    if (action === 'load_data') {
+                        outputDiv.innerHTML = "<h2>Primeras filas del Dataset:</h2>" + data.data;
+                    } else if (action === 'length_features') {
+                        outputDiv.innerHTML = `<h2>Longitud y Características del Dataset:</h2>
+                                               <p>Longitud del conjunto: ${data.length}</p>
+                                               <p>Número de características: ${data.features}</p>`;
+                    } else if (action === 'split_scale') {
+                        outputDiv.innerHTML = "<h2>Datos Escalados:</h2>" + data.scaled_data;
+                    } else if (action === 'train_tree') {
+                        outputDiv.innerHTML = `<h2>Modelo Entrenado:</h2>
+                                               <p>F1 Score en Train Set: ${data.f1_train}</p>
+                                               <p>F1 Score en Validation Set: ${data.f1_val}</p>`;
+                    } else if (action === 'train') {
+                        outputDiv.innerHTML = `<h2>Resultados del Modelo Completo:</h2>
+                                               <p>Mean Squared Error: ${data.mse}</p>
+                                               <p>R2 Score: ${data.r2}</p>
+                                               <h3>Importancia de las Características:</h3>
+                                               <table>
+                                                   <tr><th>Característica</th><th>Importancia</th></tr>`;
+                        data.feature_importance.forEach(item => {
+                            outputDiv.innerHTML += `<tr><td>${item.caracteristica}</td><td>${item.importancia}</td></tr>`;
+                        });
+                        outputDiv.innerHTML += "</table>";
+
+                        // Mostrar imagen del gráfico
+                        outputDiv.innerHTML += "<h3>Gráfico de Predicciones vs Valores Reales:</h3>";
+                        outputDiv.innerHTML += `<img src="data:image/png;base64,${data.image}" alt="Gráfico">`;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error al obtener los datos:", error);
+                });
+        }
+    </script>
+
+</body>
+</html>
